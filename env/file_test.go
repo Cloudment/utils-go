@@ -120,7 +120,7 @@ func createTempFileBenchmark(b *testing.B, content string) string {
 	return file.Name()
 }
 
-func TestParseFromFile(t *testing.T) {
+func TestParseFromFiles(t *testing.T) {
 	tests := []struct {
 		name      string
 		callback  func(key, value string) error
@@ -178,15 +178,76 @@ func TestParseFromFile(t *testing.T) {
 				filename := createTempFile(t, tt.content)
 				defer os.Remove(filename)
 
-				err = ParseFromFile(tt.callback, filename)
+				err = ParseFromFiles(tt.callback, filename)
 			} else {
-				err = ParseFromFile(tt.callback)
+				err = ParseFromFiles(tt.callback)
 			}
 			if tt.expectErr && err == nil {
 				t.Errorf("Expected error, got nil")
 			}
 			if !tt.expectErr && err != nil {
 				t.Errorf("Expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestParseFromFilesIntoStruct(t *testing.T) {
+	type testStruct struct {
+		String         string  `env:"STRING"`
+		Int            int     `env:"INT"`
+		Float          float64 `env:"FLOAT"`
+		RequiredString string  `env:"REQUIRED_STRING,required"`
+	}
+
+	tests := []struct {
+		name       string
+		content    string
+		assertFunc func(t *testing.T, filename string) error
+	}{
+		{
+			name: "Valid file parses into struct",
+			content: `STRING=string
+INT=1
+FLOAT=1.1
+REQUIRED_STRING=required
+OPTIONAL_STRING=optional`,
+			assertFunc: func(t *testing.T, filename string) error {
+				var test testStruct
+				err := ParseFromFilesIntoStruct(&test, filename)
+				if err != nil {
+					t.Errorf("Expected no error, got %v", err)
+					return err
+				}
+
+				if test.String != "string" || test.Int != 1 || test.Float != 1.1 || test.RequiredString != "required" {
+					t.Errorf("Unexpected struct values: %+v", test)
+				}
+				return nil
+			},
+		},
+		{
+			name:    "Missing file should return error",
+			content: "",
+			assertFunc: func(t *testing.T, filename string) error {
+				var test testStruct
+				err := ParseFromFilesIntoStruct(&test)
+				if err == nil {
+					t.Errorf("Expected error, got nil")
+					return errors.New("expected error, got nil")
+				}
+				return nil
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filename := createTempFile(t, tt.content)
+			defer os.Remove(filename)
+
+			if err := tt.assertFunc(t, filename); err != nil {
+				t.Errorf("Test %s failed: %v", tt.name, err)
 			}
 		})
 	}
@@ -231,7 +292,7 @@ OPTIONAL_STRING=optional`,
 			content: "",
 			assertFunc: func(t *testing.T, filename string) error {
 				var test testStruct
-				err := ParseFromFileIntoStruct(&test)
+				err := ParseFromFileIntoStruct(&test, "nonexistent.env")
 				if err == nil {
 					t.Errorf("Expected error, got nil")
 					return errors.New("expected error, got nil")
@@ -871,6 +932,83 @@ func BenchmarkUnescapeQuotes(b *testing.B) {
 	}
 }
 
+func BenchmarkParseFromFilesIntoStruct(b *testing.B) {
+	content := `KEY1=value1
+KEY2=value2
+KEY3=value3
+KEY4=value4
+KEY5=value5`
+
+	filename := createTempFileBenchmark(b, content)
+	defer os.Remove(filename)
+
+	type testStruct struct {
+		KEY1 string `env:"KEY1"`
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var test testStruct
+		err := ParseFromFilesIntoStruct(&test, filename)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkParseFromFileIntoStruct(b *testing.B) {
+	content := `KEY1=value1
+KEY2=value2
+KEY3=value3
+KEY4=value4
+KEY5=value5`
+
+	filename := createTempFileBenchmark(b, content)
+	defer os.Remove(filename)
+
+	type testStruct struct {
+		KEY1 string `env:"KEY1"`
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var test testStruct
+		err := ParseFromFileIntoStruct(&test, filename)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkParseFromFiles(b *testing.B) {
+	content := `KEY1=value1
+KEY2=value2
+KEY3=value3
+KEY4=value4
+KEY5=value5`
+
+	filename := createTempFileBenchmark(b, content)
+	defer os.Remove(filename)
+
+	callback := func(key, value string) error {
+		if key == "" || value == "" {
+			return errors.New("key or value is empty")
+		} else if key == "KEY1" && value != "value1" {
+			return errors.New("unexpected value for KEY1")
+		} else {
+			return nil
+		}
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		err := ParseFromFiles(callback, filename)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
 func BenchmarkParseFromFile(b *testing.B) {
 	content := `KEY1=value1
 KEY2=value2
@@ -893,7 +1031,7 @@ KEY5=value5`
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := ParseFromFile(callback, filename)
+		err := ParseFromFiles(callback, filename)
 		if err != nil {
 			b.Errorf("Unexpected error: %v", err)
 		}

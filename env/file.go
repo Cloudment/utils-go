@@ -12,14 +12,14 @@ import (
 
 type FileOpener func(string) (*os.File, error)
 
-// ParseFromFileIntoStruct loads environment variables from a file into a struct.
+// ParseFromFilesIntoStruct loads environment variables from a file into a struct.
 //
 // Parameters:
 //   - filenames: The filenames to load the environment variables from.
 //
 // Example:
 //
-//	err := env.ParseFromFileIntoStruct(&config, ".env")
+//	err := env.ParseFromFilesIntoStruct(&config, ".env")
 //
 // Returns: An error if the parsing fails.
 //
@@ -27,7 +27,7 @@ type FileOpener func(string) (*os.File, error)
 // When successful, the struct referenced by v will be updated.
 //
 // All processing occurs in ParseWithOpts.
-func ParseFromFileIntoStruct(v interface{}, filenames ...string) error {
+func ParseFromFilesIntoStruct(v interface{}, filenames ...string) error {
 	if len(filenames) == 0 {
 		filenames = []string{".env"}
 	}
@@ -46,12 +46,44 @@ func ParseFromFileIntoStruct(v interface{}, filenames ...string) error {
 		}
 	}
 
+	// While this could be used with ParseFromFileIntoStruct, it would error every time a required key is missing.
+	// For example, a .database.env file could be used to load database creds,
+	// but the .env file would determine the database of choice.
 	return ParseWithOpts(v, Options{
 		Env: envMap,
 	})
 }
 
-// ParseFromFile loads environment variables from a file.
+// ParseFromFileIntoStruct loads environment variables from a file into a struct.
+//
+// This function may be slightly faster than ParseFromFilesIntoStruct as it lacks the overhead of iterating over the filenames.
+//
+// Parameters:
+//   - filenames: The filenames to load the environment variables from.
+//
+// Example:
+//
+//	err := env.ParseFromFileIntoStruct(&config, ".env")
+//
+// Returns: An error if the parsing fails.
+//
+// Note: If no filenames are provided, it will default to ".env".
+// When successful, the struct referenced by v will be updated.
+//
+// All processing occurs in ParseWithOpts.
+func ParseFromFileIntoStruct(v interface{}, filename string) error {
+	envMap, err := parseFile(filename, os.Open)
+
+	if err != nil {
+		return err
+	}
+
+	return ParseWithOpts(v, Options{
+		Env: envMap,
+	})
+}
+
+// ParseFromFiles loads environment variables from multiple file.
 //
 // It allows for a callback function to be called for each key-value pair, to allow for os.Setenv or to return back the key-value pair.
 //
@@ -61,28 +93,54 @@ func ParseFromFileIntoStruct(v interface{}, filenames ...string) error {
 //
 // Example:
 //
-//	err := env.ParseFromFile(func(key, value string) error {
+//	err := env.ParseFromFiles(func(key, value string) error {
 //		return os.Setenv(key, value)
 //	}, ".env")
 //
 // Note: does not support expanding variables.
-func ParseFromFile(callbackFunc func(key, value string) error, filenames ...string) error {
+func ParseFromFiles(callbackFunc func(key, value string) error, filenames ...string) error {
 	if len(filenames) == 0 {
 		filenames = []string{".env"}
 	}
 
 	var err error
 	for _, filename := range filenames {
-		var envMap map[string]string
-		if envMap, err = parseFile(filename, os.Open); err != nil {
+		if err = ParseFromFile(callbackFunc, filename); err != nil {
 			return err
 		}
+	}
 
-		for key, val := range envMap {
-			err = callbackFunc(key, val)
-			if err != nil {
-				return err
-			}
+	return nil
+}
+
+// ParseFromFile loads environment variables from a file.
+//
+// It allows for a callback function to be called for each key-value pair, to allow for os.Setenv or to return back the key-value pair.
+//
+// This function might be slightly faster than ParseFromFiles as it lacks the overhead of iterating over the filenames.
+//
+// Parameters:
+//   - callbackFunc: The function to call for each key-value pair.
+//   - filename: The filename to load the environment variables from.
+//
+// Example:
+//
+//	err := env.ParseFromFiles(func(key, value string) error {
+//		return os.Setenv(key, value)
+//	}, ".env")
+//
+// Note: does not support expanding variables.
+func ParseFromFile(callbackFunc func(key, value string) error, filename string) error {
+	var err error
+	var envMap map[string]string
+	if envMap, err = parseFile(filename, os.Open); err != nil {
+		return err
+	}
+
+	for key, val := range envMap {
+		err = callbackFunc(key, val)
+		if err != nil {
+			return err
 		}
 	}
 

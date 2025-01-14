@@ -38,7 +38,7 @@ func main() {
 	
     // with both os.Environ() and a .env file
     var cfg2 Config
-    env.ParseFromFileIntoStruct(&cfg2) // uses os.Environ() and .env file
+    _ = env.ParseFromFileIntoStruct(&cfg2, ".env") // uses os.Environ() and .env file
     fmt.Println(cfg.Port)
 }
 ```
