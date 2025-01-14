@@ -1,0 +1,44 @@
+name: CI Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  linting:
+    name: Run Code Linters and Tests
+    runs-on: ubuntu-latest
+
+    container:
+      image: golang:alpine
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go environment
+        run: |
+          go mod download
+          go install ./...
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Run tests and enforce coverage threshold
+        run: |
+          go test -v -coverprofile=coverage.out ./...
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+          echo "Coverage - $COVERAGE"
+          if [ $(echo "$COVERAGE < 95.0" | bc) -eq 1 ]; then
+            echo "ERROR - Test coverage is below 95%: $COVERAGE"
+            exit 1
+          fi
+
+      - name: Upload coverage file
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.out
+
