@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -33,21 +32,22 @@ func BenchmarkValidatePagination(b *testing.B) {
 
 func TestToAnySlice(t *testing.T) {
 	t.Parallel()
-	is := assert.New(t)
 
-	// in1's type is []int
 	in1 := []int{0, 1, 2, 3}
-	// in2's type is []int
 	var in2 []int
 
-	// We now convert both to []interface{}
 	out1 := ToAnySlice(in1)
 	out2 := ToAnySlice(in2)
 
-	// We expect out1 to be []interface{}{0, 1, 2, 3}
-	// We expect out2 to be []interface{}{}
-	is.Equal([]any{0, 1, 2, 3}, out1)
-	is.Equal([]any{}, out2)
+	expectedOut1 := []any{0, 1, 2, 3}
+	expectedOut2 := []any{} // If this is changed, the test will fail
+
+	if !IsEqual(out1, expectedOut1) {
+		t.Errorf("Expected %v, got %v", expectedOut1, out1)
+	}
+	if !IsEqual(out2, expectedOut2) {
+		t.Errorf("Expected %v, got %v", expectedOut2, out2)
+	}
 }
 
 // TODO: Add better user agent testing, more comprehensive list of user agents and operating systems
@@ -134,37 +134,54 @@ func BenchmarkGetOperatingSystemFromUserAgent(b *testing.B) {
 
 func TestIsEqual(t *testing.T) {
 	t.Parallel()
-	is := assert.New(t)
 
-	// Expect IsEqual(1, 1) to be true
-	// Expect IsEqual(1, 2) to be false
-	is.True(IsEqual(1, 1))
-	is.False(IsEqual(1, 2))
+	if !IsEqual(1, 1) {
+		t.Error("Expected IsEqual(1, 1) to be true")
+	}
+	if IsEqual(1, 2) {
+		t.Error("Expected IsEqual(1, 2) to be false")
+	}
 
-	// Expect IsEqual("hello", "hello") to be true
-	is.True(IsEqual("hello", "hello"))
-	is.False(IsEqual("hello", "world"))
+	if !IsEqual("hello", "hello") {
+		t.Error("Expected IsEqual(\"hello\", \"hello\") to be true")
+	}
+	if IsEqual("hello", "world") {
+		t.Error("Expected IsEqual(\"hello\", \"world\") to be false")
+	}
 
-	// Expect IsEqual(1.0, 1.0) to be true
-	is.True(IsEqual(1.0, 1.0))
-	is.False(IsEqual(1.0, 2.0))
+	if !IsEqual(1.0, 1.0) {
+		t.Error("Expected IsEqual(1.0, 1.0) to be true")
+	}
+	if IsEqual(1.0, 2.0) {
+		t.Error("Expected IsEqual(1.0, 2.0) to be false")
+	}
 
-	// Expect IsEqual(true, true) to be true
-	is.True(IsEqual(true, true))
-	is.False(IsEqual(true, false))
+	if !IsEqual(true, true) {
+		t.Error("Expected IsEqual(true, true) to be true")
+	}
+	if IsEqual(true, false) {
+		t.Error("Expected IsEqual(true, false) to be false")
+	}
 
 	type testStruct struct {
 		Name string
 		Age  int
 	}
 
-	// Expect IsEqual(testStruct{Name: "John", Age: 30}, testStruct{Name: "John", Age: 30}) to be true
 	a := testStruct{Name: "John", Age: 30}
 	b := testStruct{Name: "John", Age: 30}
-	is.True(IsEqual(a, b))
+	if !IsEqual(a, b) {
+		t.Error("Expected IsEqual(testStruct{Name: \"John\", Age: 30}, testStruct{Name: \"John\", Age: 30}) to be true")
+	}
 	b.Age = 31
-	is.False(IsEqual(a, b))
+	if IsEqual(a, b) {
+		t.Error("Expected IsEqual(testStruct{Name: \"John\", Age: 30}, testStruct{Name: \"John\", Age: 31}) to be false")
+	}
 
-	is.True(IsEqual(nil, nil))
-	is.False(IsEqual(nil, 1))
+	if !IsEqual(nil, nil) {
+		t.Error("Expected IsEqual(nil, nil) to be true")
+	}
+	if IsEqual(nil, 1) {
+		t.Error("Expected IsEqual(nil, 1) to be false")
+	}
 }
