@@ -30,13 +30,13 @@ type Config struct {
     Port int `env:"PORT" envDefault:"8080"`
 }
 
-func main() {
-	// with just os.Environ()
+func main() { 
+    // with just os.Environ() 
     var cfg Config
     env.Parse(&cfg)
     fmt.Println(cfg.Port)
 	
-	// with both os.Environ() and a .env file
+    // with both os.Environ() and a .env file
     var cfg2 Config
     env.ParseFromFileIntoStruct(&cfg2) // uses os.Environ() and .env file
     fmt.Println(cfg.Port)
@@ -67,7 +67,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     if err := BindRequest(r, &req); err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
-	}
+    }
 }
 ```
 
