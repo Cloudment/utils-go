@@ -18,6 +18,20 @@ Before we required both `joho/godotenv` and `caarlos0/env` to parse environment 
 
 However, this package eliminates the need for both, in a faster and simpler way.
 
+In order to read a `.env`, parse, and store it in a struct, we would need to use both libraries.
+
+#### Benchmarks taken on an AMD Ryzen 9 7950X3D
+
+| Library<br/>Function                                   | Benchmark time  | Change / Percentage Difference       |
+|--------------------------------------------------------|-----------------|--------------------------------------|
+| `joho/godotenv` <br/> `Load()`                         | 22,207 ns/op    | N/A                                  |
+| `cloudment/utils-go` <br/> `ParseFromFileIntoStruct()` | **9,013 ns/op** | **13,194 ns/op quicker <br/>   84%** |
+| `caarlos0/env`  <br/>  `Parse()`                       | 4,750 ns/op     | N/A                                  |
+| `cloudment/utils-go` <br/> `Parse()`                   | **2,971 ns/op** | **1,779 ns/op quicker <br/>   46%**  |
+
+Note: `joho/godotenv` tests were done including `caarlos0/env` as it is required to parse the `.env` file and store it in a struct.
+
+#### Example
 ```go
 package main
 
