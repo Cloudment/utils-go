@@ -43,6 +43,13 @@ func TestGenerateRandomNumber(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
+
+	num, err = GenerateRandomNumber(0, 1)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	} else if num != 0 && num != 1 {
+		t.Errorf("Expected number to be 0 or 1, got %d", num)
+	}
 }
 
 func TestGenerateRandomString(t *testing.T) {
