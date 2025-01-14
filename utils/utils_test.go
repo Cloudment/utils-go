@@ -126,6 +126,12 @@ func TestGetOperatingSystemFromUserAgent(t *testing.T) {
 	}
 }
 
+func BenchmarkGetOperatingSystemFromUserAgent(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		GetOperatingSystemFromUserAgent(userAgents.Desktop[0])
+	}
+}
+
 func TestIsEqual(t *testing.T) {
 	t.Parallel()
 	is := assert.New(t)

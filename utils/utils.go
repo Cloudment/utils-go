@@ -64,6 +64,8 @@ func ToAnySlice[T any](collection []T) []any {
 //	-> "Windows"
 func GetOperatingSystemFromUserAgent(userAgent string) string {
 	// TODO: Make more comprehensive, add more OSes
+	// Doing a for loop with a map is 60% slower than this
+	// While a switch statement might look cleaner, there is no performance difference and visually similar.
 	if strings.Contains(userAgent, "iPhone") {
 		return "iOS"
 	} else if strings.Contains(userAgent, "Android") {
