@@ -37,12 +37,16 @@ func GormSearchQuery[p interface{}](params p) (string, []interface{}) {
 	var conditions []string
 	var args []interface{}
 
+	// While it looks like this code could be improved with caching, the advantage would be ~80 ns/op,
+	// which compared to the rest of the function, the code would be more complex and harder to read/maintain.
 	v := reflect.ValueOf(params)
 	t := v.Type()
 
 	for i := 0; i < t.NumField(); i++ {
 		fieldValue := v.Field(i)
 		fieldType := t.Field(i)
+
+		// The use of the query tag allows any struct, even the GORM model struct, to be used with this function.
 		queryTag := fieldType.Tag.Get("query")
 
 		// Skip if no tag is provided or the field value is empty
@@ -53,7 +57,6 @@ func GormSearchQuery[p interface{}](params p) (string, []interface{}) {
 		conditions = append(conditions, queryTag)
 		args = append(args, fieldValue.Interface())
 	}
-
 	if len(conditions) > 0 {
 		queryStr := "(" + strings.Join(conditions, " AND ") + ")"
 
