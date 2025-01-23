@@ -43,9 +43,10 @@ const (
 
 // Options contains the options to pass through the parser.
 //
-// This is sent down to the parseStruct function.
+// Example uses of Options might be to add in additional Env keys and values which could be taken from other sources.
+// Such as loading from a secure store, then unsetting all the environment variables after load.
 type Options struct {
-	// Env keys and values. This is fetched from os.Environ().
+	// Env keys and values. This is fetched from os.Environ()
 	Env map[string]string
 
 	// Prefix is the prefix to apply before the key. Usually taken from the struct tag.
@@ -55,7 +56,7 @@ type Options struct {
 
 	// rawEnvVars is the raw environment variables, this is used when expanding variables.
 	//
-	// Appended everytime a new key is found.
+	// Appended everytime a new key is found. Otherwise, this could be used for additional configuration.
 	rawEnvVars map[string]string
 }
 

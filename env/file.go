@@ -15,6 +15,7 @@ type FileOpener func(string) (*os.File, error)
 // ParseFromFilesIntoStruct loads environment variables from a file into a struct.
 //
 // Parameters:
+//   - v: A pointer to a struct containing `env` tags.
 //   - filenames: The filenames to load the environment variables from.
 //
 // Example:
@@ -59,6 +60,7 @@ func ParseFromFilesIntoStruct(v interface{}, filenames ...string) error {
 // This function may be slightly faster than ParseFromFilesIntoStruct as it lacks the overhead of iterating over the filenames.
 //
 // Parameters:
+//   - v: A pointer to a struct containing `env` tags.
 //   - filenames: The filenames to load the environment variables from.
 //
 // Example:
