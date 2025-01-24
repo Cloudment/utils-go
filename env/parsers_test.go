@@ -61,6 +61,14 @@ func TestTypeParsers(t *testing.T) {
 		t.Errorf("Expected error, got nil")
 	}
 
+	// Another bad duration
+	_, err = typeParsers[reflect.TypeOf(time.Nanosecond)]("1d")
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	} else if err.Error() != "use '24h' instead of '1d' for 24 hours: time: unknown unit \"d\" in duration \"1d\"" {
+		t.Errorf("Expected duration error to state days are not supported, got %v", err)
+	}
+
 	// good duration
 	d, err := typeParsers[reflect.TypeOf(time.Nanosecond)]("1s")
 	if err != nil {

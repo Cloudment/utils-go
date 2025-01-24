@@ -77,7 +77,14 @@ var (
 	// Must return a non-pointer type.
 	typeParsers = map[reflect.Type]ParserFunc{
 		reflect.TypeOf(time.Nanosecond): func(v string) (interface{}, error) {
-			return time.ParseDuration(v)
+			d, err := time.ParseDuration(v)
+			// Days are not always 24 hours long
+			// See: https://github.com/golang/go/issues/11473
+			// See: https://bigthink.com/starts-with-a-bang/day-isnt-24-hours/
+			if err != nil && strings.Contains(err.Error(), "unknown unit \"d\"") {
+				err = fmt.Errorf("use '24h' instead of '1d' for 24 hours: %w", err)
+			}
+			return d, err
 		},
 		reflect.TypeOf(time.Location{}): func(v string) (interface{}, error) {
 			loc, err := time.LoadLocation(v)
