@@ -7,6 +7,34 @@ import (
 	"time"
 )
 
+// TestParseWithExpand tests to see if to expand tag works when no env variable is set
+//
+// Other tools also lack in this area, so an improvement may be seen from fixing this.
+// TODO: Fix this test to work without the setenv function
+func TestParseWithExpand(t *testing.T) {
+	type NestedStruct struct {
+		MainValue string `env:"MAIN_VALUE,expand" envDefault:"main${NESTED_SUB_VALUE}"`
+		SubValue  int    `env:"SUB_VALUE" envDefault:"1"`
+	}
+	type Struct struct {
+		Nested NestedStruct `envPrefix:"NESTED"`
+	}
+
+	t.Setenv("NESTED_SUB_VALUE", "1")
+
+	data := Struct{}
+
+	err := Parse(&data)
+
+	if err != nil {
+		t.Errorf("Parse() error = %v", err)
+	}
+
+	if data.Nested.MainValue != "main1" {
+		t.Errorf("Parse() data.Nested.MainValue = %v; want main1", data.Nested.MainValue)
+	}
+}
+
 func TestParseFieldTags(t *testing.T) {
 	tests := []struct {
 		name     string
