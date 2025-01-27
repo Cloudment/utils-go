@@ -88,8 +88,16 @@ func (opts Options) getRawEnv(s string) string {
 //   - A new Options struct with the prefix set.
 //
 // See: https://pkg.go.dev/reflect#StructField
+//
+// Note: If a trailing underscore is not present, it will append one.
 func (opts Options) withPrefix(sf reflect.StructField) Options {
 	opts.Prefix = opts.Prefix + sf.Tag.Get(PrefixEnv)
+
+	// Append an underscore if it's not already there.
+	if len(opts.Prefix) > 0 && opts.Prefix[len(opts.Prefix)-1] != '_' {
+		opts.Prefix = opts.Prefix + "_"
+	}
+
 	return opts
 }
 
