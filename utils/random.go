@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
+	"time"
 )
 
 // GenerateRandomNumber generates a secure random integer
@@ -15,10 +17,6 @@ import (
 //   - max: The maximum value (exclusive).
 //
 // Returns: The generated random number or an error if the generation fails.
-//
-// Usage:
-//
-//	num, err := GenerateRandomNumber(1, 10)
 //
 // Example:
 //
@@ -36,10 +34,6 @@ func GenerateRandomNumber(min int, max int) (int, error) {
 //
 // Returns: The generated random string or an error if the generation fails.
 //
-// Usage:
-//
-//	str, err := GenerateRandomString(10)
-//
 // Example:
 //
 //	str, err := GenerateRandomString(10)
@@ -55,16 +49,106 @@ func GenerateRandomString(length int) (string, error) {
 //
 // Returns: The generated random bytes or an error if the generation fails.
 //
-// Usage:
-//
-//	bytes, err := GenerateRandomBytes(10)
-//
 // Example:
 //
 //	bytes, err := GenerateRandomBytes(10)
 //	fmt.Println(bytes)
 func GenerateRandomBytes(n int) ([]byte, error) {
 	return generateRandomBytes(n, rand.Reader)
+}
+
+// GenerateRandomDuration generates a random duration with the given minimum (exclusive) and maximum (inclusive) values.
+//
+// This is similar to GenerateRandomNumber but generates a random duration instead.
+//
+// Parameters:
+//   - min: The minimum value (inclusive).
+//   - max: The maximum value (exclusive).
+//   - unit: The unit of the duration.
+//
+// Returns: The generated random duration or an error if the generation fails.
+//
+// Example:
+//
+//	duration, err := GenerateRandomDuration(1, 10, time.Second)
+//	fmt.Println(duration) // Output: 5s
+func GenerateRandomDuration(min int, max int, unit time.Duration) (time.Duration, error) {
+	return generateRandomDuration(min, max, unit, rand.Reader)
+}
+
+// generateRandomDuration generates a random duration with the given minimum (exclusive) and maximum (inclusive)
+// values using the provided reader. It uses generateRandomNumber to generate the random number.
+//
+// Parameters:
+//   - min: The minimum value (inclusive).
+//   - max: The maximum value (exclusive).
+//   - unit: The unit of the duration.
+//
+// Returns: The generated random duration or an error if the generation fails.
+func generateRandomDuration(min int, max int, unit time.Duration, reader io.Reader) (time.Duration, error) {
+	n, err := generateRandomNumber(min, max, reader)
+	if err != nil {
+		return 0, err
+	}
+
+	return time.Duration(n) * unit, nil
+}
+
+// GenerateOTP generates a secure random one-time password (OTP) of the given length.
+//
+// Parameters:
+//   - length: The length of the generated OTP.
+//
+// Returns: The generated OTP or an error if the generation fails.
+//
+// Example:
+//
+//	otp, err := GenerateOTP(6)
+//	fmt.Println(otp) // Output: "123
+func GenerateOTP(length int) (otp int, err error) {
+	return generateOTP(length, rand.Reader)
+}
+
+// generateOTP generates a secure random one-time password (OTP) of the given length using the provided reader.
+//
+// Parameters:
+//   - length: The length of the generated OTP. The length should be greater than 0.
+//   - reader: The io.Reader to use for generating random numbers.
+//
+// Returns: The generated OTP or an error if the generation fails.
+func generateOTP(length int, reader io.Reader) (otp int, err error) {
+	if length <= 0 {
+		return 0, newParseValueError("length should be greater than 0")
+	}
+
+	// Avoids having to loop:
+	//  for i := 1; i < length; i++ {
+	//	   num *= 10
+	//  }
+	// As math.Pow10 stores precomputed values it's m
+	//
+	//  BenchmarkMathPow10                   	1000000000	         0.3159 ns/op
+	//  BenchmarkLoop                        	379423045	         3.148  ns/op
+
+	rangeSize := int64(math.Pow10(length))
+	minRangeSize := int64(math.Pow10(length - 1))
+
+	n, err := rand.Int(
+		reader,
+		big.NewInt(rangeSize),
+	)
+
+	if err != nil {
+		return 0, fmt.Errorf("could not generate OTP: %w", err)
+	}
+
+	otp = int(n.Int64())
+
+	if otp < int(minRangeSize) {
+		otp += int(minRangeSize)
+	}
+
+	return otp, nil
 }
 
 // generateRandomNumber generates a secure random integer
@@ -81,11 +165,6 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 //   - reader: The io.Reader to use for generating random numbers.
 //
 // Returns: The generated random number or an error if the generation fails.
-//
-// Example:
-//
-//	num, err := generateRandomNumber(1, 10, rand.Reader)
-//	fmt.Println(num) // Output: 5
 func generateRandomNumber(min int, max int, reader io.Reader) (int, error) {
 	if min >= max {
 		return 0, newParseValueError("min should be less than max")
@@ -96,7 +175,8 @@ func generateRandomNumber(min int, max int, reader io.Reader) (int, error) {
 
 	// rand.int takes in a max value, generation occurs between 0 and the range size
 	// if intended max is 50, min is 10, the range size is 40
-	// If the random number generated is 0, when added back within the min value, it will be 10
+	// If the random number generated is 0, when added back with the min value, it will be 10
+	// Another example, if it was 39, it will be 49 when added back with the min value
 	rangeSize := int64(max - min)
 	n, err := rand.Int(reader, big.NewInt(rangeSize))
 	if err != nil {
@@ -114,15 +194,6 @@ func generateRandomNumber(min int, max int, reader io.Reader) (int, error) {
 //   - reader: The io.Reader to use for generating random numbers.
 //
 // Returns: The generated random string or an error if the generation fails.
-//
-// Usage:
-//
-//	str, err := generateRandomString(10, rand.Reader)
-//
-// Example:
-//
-//	str, err := generateRandomString(10, rand.Reader)
-//	fmt.Println(str) // Output: "kTvOz81Qdt"
 func generateRandomString(length int, reader io.Reader) (string, error) {
 	if length <= 0 {
 		return "", newParseValueError("length should be greater than 0")
@@ -150,15 +221,6 @@ func generateRandomString(length int, reader io.Reader) (string, error) {
 //   - reader: The io.Reader to use for generating random bytes.
 //
 // Returns: The generated random bytes or an error if the generation fails.
-//
-// Usage:
-//
-//	bytes, err := generateRandomBytes(10, rand.Reader)
-//
-// Example:
-//
-//	bytes, err := generateRandomBytes(10, rand.Reader)
-//	fmt.Println(bytes)
 func generateRandomBytes(n int, reader io.Reader) ([]byte, error) {
 	if n <= 0 {
 		return nil, newParseValueError("n should be greater than 0")

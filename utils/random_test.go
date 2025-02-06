@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"crypto/rand"
 	"errors"
 	"testing"
+	"time"
 )
 
 type errorReader struct{}
@@ -89,6 +91,80 @@ func TestGenerateRandomBytes(t *testing.T) {
 	_, err = generateRandomBytes(10, &errorReader{})
 	if err == nil {
 		t.Errorf("Expected error, got nil")
+	}
+}
+
+func TestGenerateRandomDuration(t *testing.T) {
+	duration, err := GenerateRandomDuration(1, 10, time.Second)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if duration < 1*time.Second || duration >= 10*time.Second {
+		t.Errorf("Expected duration between 1 and 10 seconds, got %v", duration)
+	}
+
+	_, err = GenerateRandomDuration(10, 1, time.Second)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	duration, err = GenerateRandomDuration(1, 10, time.Millisecond)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	} else if duration < 1*time.Millisecond || duration >= 10*time.Millisecond {
+		t.Errorf("Expected duration between 1 and 10 milliseconds, got %v", duration)
+	}
+
+	_, err = generateRandomDuration(1, 10, time.Second, &errorReader{})
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}
+
+func BenchmarkGenerateRandomDuration(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := GenerateRandomDuration(1, 10, time.Second)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
+func TestGenerateOTP(t *testing.T) {
+	// Large number of iterations to ensure tests try to fail it
+	for i := 0; i < 100; i++ {
+		otp, err := generateOTP(2, rand.Reader)
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		if otp < 10 || otp >= 100 { // Upper bound
+			t.Errorf("Expected OTP between 10 and 100, got %d", otp)
+		}
+	}
+
+	_, err := generateOTP(0, rand.Reader)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	_, err = generateOTP(6, &errorReader{})
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	_, err = GenerateOTP(6)
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
+
+func BenchmarkGenerateOTP(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := generateOTP(6, rand.Reader)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
 	}
 }
 

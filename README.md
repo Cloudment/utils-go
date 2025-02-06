@@ -16,7 +16,11 @@ go get github.com/cloudment/utils-go
 
 Before we required both `joho/godotenv` and `caarlos0/env` to parse environment variables and store them in a struct.
 
-However, this package eliminates the need for both, in a faster and simpler way.
+However, this package eliminates the need for both, in a faster and simpler way. 
+
+There are plans to move this package to its own repository in the future. 
+Including support for json, yml, toml, ini, csv, and pkl configuration files. Maybe support for providers
+such as S3 (Read a file from S3 and parse it into a struct).
 
 In order to read a `.env`, parse, and store it in a struct, we would need to use both libraries.
 
