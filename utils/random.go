@@ -129,13 +129,15 @@ func generateOTP(length int, reader io.Reader) (otp int, err error) {
 	//
 	//  BenchmarkMathPow10                   	1000000000	         0.3159 ns/op
 	//  BenchmarkLoop                        	379423045	         3.148  ns/op
-
-	rangeSize := int64(math.Pow10(length))
-	minRangeSize := int64(math.Pow10(length - 1))
+	maxVal := int64(math.Pow10(length))
+	minVal := int64(math.Pow10(length - 1))
+	// maxVal is 100 (exclusive) if length is 2, which would do 10^2
+	// minVal is 10 (inclusive) if length is 2 (2-1), which would do 10^1
+	// Producing a range number between 10 and 99, which would allow for 89 random numbers for a length of 2.
 
 	n, err := rand.Int(
 		reader,
-		big.NewInt(rangeSize),
+		big.NewInt(maxVal),
 	)
 
 	if err != nil {
@@ -144,8 +146,8 @@ func generateOTP(length int, reader io.Reader) (otp int, err error) {
 
 	otp = int(n.Int64())
 
-	if otp < int(minRangeSize) {
-		otp += int(minRangeSize)
+	if otp < int(minVal) {
+		otp += int(minVal)
 	}
 
 	return otp, nil
