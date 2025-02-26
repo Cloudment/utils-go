@@ -10,10 +10,17 @@ import (
 // Any field not tagged with `update:"true"` will be ignored.
 //
 // Parameters:
-//
 //   - current: A pointer to the struct that will be updated.
-//
 //   - newStruct: A pointer to the struct that will be used to update the current struct.
+//
+// Usage:
+// If you have an update route, and set your database to also provide json tagging, you can use the same struct for both the database and the update route.
+// Specifying `update:"true"` in the json tag will allow the UpdateStruct function to update the struct.
+//
+// A password would not be set with an update tag as it should be hashed before it is stored in the database.
+//
+// Another example of this is you have a smaller struct that you want to use to update a larger struct.
+// And you only want to update the fields that are in the smaller struct.
 //
 // Example struct:
 //
