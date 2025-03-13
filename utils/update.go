@@ -43,7 +43,7 @@ func UpdateStruct[t interface{}, t2 interface{}](current *t, newStruct *t2) {
 		currentFieldInfo := currentType.Field(i)
 		currentFieldName := currentFieldInfo.Name
 
-		// Check if the field has the update tag
+		// Check if the field has the update tag `update:"true"`
 		if currentFieldInfo.Tag.Get("update") != "true" {
 			continue
 		}

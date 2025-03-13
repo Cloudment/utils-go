@@ -18,7 +18,7 @@ Before we required both `joho/godotenv` and `caarlos0/env` to parse environment 
 
 However, this package eliminates the need for both, in a faster and simpler way. 
 
-There are plans to move this package to its own repository in the future. 
+There are plans to move this package to its own repository in the future, therefore no new features are going to be added.
 Including support for json, yml, toml, ini, csv, and pkl configuration files. Maybe support for providers
 such as S3 (Read a file from S3 and parse it into a struct).
 
