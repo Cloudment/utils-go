@@ -57,6 +57,25 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 	return generateRandomBytes(n, rand.Reader)
 }
 
+type Integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+}
+
+// GenerateRandomBytes generates secure random bytes using the default rand.Reader.
+//
+// Parameters:
+//   - n: The number of bytes to generate.
+//
+// Returns: The generated random bytes or an error if the generation fails.
+//
+// Example:
+//
+//	bytes, err := GenerateRandomBytesGeneric[uint8](10)
+//	fmt.Println(bytes)
+func GenerateRandomBytesGeneric[T Integer](n T) ([]byte, error) {
+	return generateRandomBytesGeneric(n, rand.Reader)
+}
+
 // GenerateRandomDuration generates a random duration with the given minimum (exclusive) and maximum (inclusive) values.
 //
 // This is similar to GenerateRandomNumber but generates a random duration instead.
@@ -224,6 +243,25 @@ func generateRandomString(length int, reader io.Reader) (string, error) {
 //
 // Returns: The generated random bytes or an error if the generation fails.
 func generateRandomBytes(n int, reader io.Reader) ([]byte, error) {
+	if n <= 0 {
+		return nil, newParseValueError("n should be greater than 0")
+	}
+	b := make([]byte, n)
+	_, err := reader.Read(b)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate random bytes: %w", err)
+	}
+	return b, nil
+}
+
+// generateRandomBytes generates secure random bytes using the provided reader.
+//
+// Parameters:
+//   - n: The number of bytes to generate.
+//   - reader: The io.Reader to use for generating random bytes.
+//
+// Returns: The generated random bytes or an error if the generation fails.
+func generateRandomBytesGeneric[T Integer](n T, reader io.Reader) ([]byte, error) {
 	if n <= 0 {
 		return nil, newParseValueError("n should be greater than 0")
 	}

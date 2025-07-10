@@ -94,6 +94,55 @@ func TestGenerateRandomBytes(t *testing.T) {
 	}
 }
 
+func TestGenerateRandomBytesGeneric(t *testing.T) {
+	bytes, err := GenerateRandomBytesGeneric[uint8](10)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(bytes) != 10 {
+		t.Errorf("Expected 10 bytes, got %d", len(bytes))
+	}
+
+	bytes, err = GenerateRandomBytesGeneric[int8](10)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(bytes) != 10 {
+		t.Errorf("Expected 10 bytes, got %d", len(bytes))
+	}
+
+	bytes, err = GenerateRandomBytesGeneric[uint64](10)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(bytes) != 10 {
+		t.Errorf("Expected 10 bytes, got %d", len(bytes))
+	}
+
+	bytes, err = GenerateRandomBytesGeneric[int64](10)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(bytes) != 10 {
+		t.Errorf("Expected 10 bytes, got %d", len(bytes))
+	}
+
+	_, err = GenerateRandomBytesGeneric[uint8](0)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	_, err = GenerateRandomBytesGeneric[int8](0)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	_, err = generateRandomBytesGeneric[uint8](10, &errorReader{})
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+}
+
 func TestGenerateRandomDuration(t *testing.T) {
 	duration, err := GenerateRandomDuration(1, 10, time.Second)
 	if err != nil {
@@ -189,6 +238,33 @@ func BenchmarkGenerateRandomString(b *testing.B) {
 func BenchmarkGenerateRandomBytes(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := GenerateRandomBytes(100)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkGenerateRandomBytesWithGenericsUint16(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := GenerateRandomBytesGeneric[uint16](100)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkGenerateRandomBytesWithGenericsUint8(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := GenerateRandomBytesGeneric[uint8](100)
+		if err != nil {
+			b.Errorf("Unexpected error: %v", err)
+		}
+	}
+}
+
+func BenchmarkGenerateRandomBytesWithGenericsInt32(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := GenerateRandomBytesGeneric[int32](100)
 		if err != nil {
 			b.Errorf("Unexpected error: %v", err)
 		}
