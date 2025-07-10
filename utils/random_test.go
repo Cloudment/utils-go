@@ -182,6 +182,7 @@ func BenchmarkGenerateRandomDuration(b *testing.B) {
 func TestGenerateOTP(t *testing.T) {
 	// Large number of iterations to ensure tests try to fail it
 	for i := 0; i < 100; i++ {
+		// 2 is passed in as the length is 2, an alternative is GenerateRandomNumber(10, 101) which isn't very readable.
 		otp, err := generateOTP(2, rand.Reader)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)

@@ -61,9 +61,10 @@ type Integer interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
-// GenerateRandomBytes generates secure random bytes using the default rand.Reader.
+// GenerateRandomBytesGeneric generates secure random bytes using the default rand.Reader with the given Integer type.
 //
 // Parameters:
+//   - T: An integer type, uint/int/uint8/int8 etc.
 //   - n: The number of bytes to generate.
 //
 // Returns: The generated random bytes or an error if the generation fails.
@@ -254,9 +255,10 @@ func generateRandomBytes(n int, reader io.Reader) ([]byte, error) {
 	return b, nil
 }
 
-// generateRandomBytes generates secure random bytes using the provided reader.
+// generateRandomBytesGeneric generates secure random bytes using the provided reader and the given Integer type.
 //
 // Parameters:
+//   - T: An integer type, uint/int/uint8/int8 etc.
 //   - n: The number of bytes to generate.
 //   - reader: The io.Reader to use for generating random bytes.
 //
